@@ -48,7 +48,6 @@
     	    margin: 0 0 5px;
     	    color: #777;
     	}
-
     </style>
 
 	
@@ -56,11 +55,11 @@
 <body>
 
 
-<div id="mapid" style="width: 600px; height: 400px;"></div>
+<div id="mapid" style="width: 900px; height: 700px;"></div>
+
 <script>
 
 	var map = L.map('mapid').setView([50, 30], 5);
-
 	L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
 		maxZoom: 18,
 		attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
@@ -75,149 +74,142 @@ d3.json("Json/oblast.json")
 	      .then(function(data){
 	      	d3.csv("misto.csv")
 	      		.then(function(misto){
+
 	      			var colorScale = d3.interpolateOranges
-			var scale = d3.scaleLog()
-				.domain([0.1, 100])
-		    	.range([0.1, 1]);
 
-		    // var layers = L.layerGroup()
+					var scale = d3.scaleLog()
+						.domain([0.1, 100])
+				    	.range([0.1, 1]);
 
-		    // var layers = {
-		    // 	'layer': dataMap,
-		    // 	'misto': misto
-		    // } 
+				    // var layers = L.layerGroup()
+				    // var layers = {
+				    // 	'layer': dataMap,
+				    // 	'misto': misto
+				    // } 
 
-		        var dataMap = d3.nest().key(function(d) {
-		        	return d.region_key
-		        }).map(data)
+			        var dataMap = d3.nest().key(function(d) {
+			        	return d.region_key
+			        }).map(data)
 
-		        polygon.features.forEach(function(d) { 
-		        	d.properties['schoolData'] = dataMap['$'+ d.properties.NAME_1]
-		        	  })
+			        polygon.features.forEach(function(d) { 
+			        	d.properties['schoolDataSelo'] = dataMap['$'+ d.properties.NAME_1]
+		        	})
 
-		        var layer = L.geoJSON(polygon, {style:
-		        	{weight: 2,
-		        	stroke: 'white',
-		        	opacity: 1,
-		        	color: 'white',
-		        	dashArray: '3',
-		        	fillOpacity: 0.7
-		        }}).addTo(map);
+			        var layer = L.geoJSON(polygon, {style:
+			        	{weight: 2,
+			        	stroke: 'white',
+			        	opacity: 1,
+			        	color: 'white',
+			        	dashArray: '3',
+			        	fillOpacity: 0.7
+			        }})
+			        // .addTo(map);
 
-		        var misto = d3.nest().key(function(d) {
-		        	return d.region_key
-		        }).map(misto)
+			        var misto = d3.nest().key(function(d) {
+			        	return d.region_key
+			        }).map(misto)
 
-		        polygon.features.forEach(function(d) { 
-		        	d.properties['schoolData'] = misto['$'+ d.properties.NAME_1]
-		        	  })
+			        polygon.features.forEach(function(d) { 
+			        	d.properties['schoolDataMisto'] = misto['$'+ d.properties.NAME_1]
+			        	  })
 
-		        var misto_layer = L.geoJSON(polygon, {style:
-		        	{weight: 2,
-		        	stroke: 'white',
-		        	opacity: 1,
-		        	color: 'white',
-		        	dashArray: '3',
-		        	fillOpacity: 0.7
-		        }}).addTo(map);
+			        var misto_layer = L.geoJSON(polygon, {style:
+			        	{weight: 2,
+			        	stroke: 'white',
+			        	opacity: 1,
+			        	color: 'white',
+			        	dashArray: '3',
+			        	fillOpacity: 0.7
+			        }})
+			        .addTo(map);
 
-	        layer.setStyle(function (d) {
-	             // return {'color':colorScale(+d.properties.schoolData[0].ratio_out)}
-	             return {'color':colorScale(scale(+d.properties.schoolData[0]['' + d.properties.schoolData[0].region_key]/4))}  
-	        });
+			        layer.setStyle(function (d) {
+			             // return {'color':colorScale(+d.properties.schoolData[0].ratio_out)}
+			             return {'color':colorScale(scale(+d.properties.schoolDataSelo[0]['' + d.properties.schoolDataSelo[0].region_key]/4))}  
+			        });
 
-	        misto_layer.setStyle(function (d) {
-	             // return {'color':colorScale(+d.properties.schoolData[0].ratio_out)}
-	             return {'color':colorScale(scale(+d.properties.schoolData[0]['' + d.properties.schoolData[0].region_key]/4))}  
-	        });
+			        misto_layer.setStyle(function (d) {
+			             // return {'color':colorScale(+d.properties.schoolData[0].ratio_out)}
+			             return {'color':colorScale(scale(+d.properties.schoolDataMisto[0]['' + d.properties.schoolDataMisto[0].region_key]/4))}  
+			        });
 
-	        var baseLayers = {
-	        	'місто': misto_layer,
-	        	'село': layer
-	        }
+			        var baseLayers = {
+			        	'місто': misto_layer,
+			        	'село': layer
+			        }
 
-	        window.baseLayers = baseLayers;
+			        window.baseLayers = baseLayers;
 
-	        L.control.layers(baseLayers).addTo(map);
+			        L.control.layers(baseLayers).addTo(map);
 
+			        layer.on('mouseover', function(selo) {
+			        	console.log("selo mouseover")
+				        layer.setStyle(function (dd) {
+				        		return {'color':colorScale(scale(+selo.sourceTarget.feature.properties.schoolDataSelo[0]['' + dd.properties.schoolDataSelo[0].region_key]))}
+				        
+				        	
+				        });
 
-	        layer.on('mouseover', function(selo) {
+				        info.update(selo.sourceTarget.feature.properties.schoolDataSelo[0]);
 
-		        layer.setStyle(function (dd) {
-		        		return {'color':colorScale(scale(+selo.sourceTarget.feature.properties.schoolData[0]['' + dd.properties.schoolData[0].region_key]))}
-		        
-		        	
-
-		        });
-
-		        info.update(selo.sourceTarget.feature.properties.schoolData[0]);
-		        // d3.select('div.info p').text('I can write here')
-		        	        	        console.log('selo')
-
-
-	        })
+				        // d3.select('div.info p').text('I can write here')
+				        	        	        console.log('selo')
+			        })
 
 	                misto_layer.on('mouseover', function(d) {
-
+	        	        console.log("misto mouseover")
 	        	        misto_layer.setStyle(function (dd) {
-	        	        		return {'color':colorScale(scale(+d.sourceTarget.feature.properties.schoolData[0]['' + dd.properties.schoolData[0].region_key]))}
+	        	        		return {'color':colorScale(scale(+d.sourceTarget.feature.properties.schoolDataMisto[0]['' + dd.properties.schoolDataMisto[0].region_key]))}
 	        	        
 	        	        	
-
 	        	        });
 
-	        	        info.update(d.sourceTarget.feature.properties.schoolData[0]);
+	        	        info.update(d.sourceTarget.feature.properties.schoolDataMisto[0]);
 	        	        // d3.select('div.info p').text('I can write here')
 	        	        console.log('misto')
-
 	                })
 
-	        layer.on('mouseout', function(d) {
+			        layer.on('mouseout', function(d) {
+			        	layer.setStyle(function (d) {
+			             // return {'color':colorScale(+d.properties.schoolData[0].ratio_out)}
+			             return {'color':colorScale(scale(+d.properties.schoolDataSelo[0]['' + d.properties.schoolDataSelo[0].region_key]/4))}  
 
-	        	layer.setStyle(function (d) {
-	             // return {'color':colorScale(+d.properties.schoolData[0].ratio_out)}
-	             return {'color':colorScale(scale(+d.properties.schoolData[0]['' + d.properties.schoolData[0].region_key]/4))}  
-	        });
+				        });
+			        })
 
-	        })
+			        misto_layer.on('mouseout', function(d) {
+			        	misto_layer.setStyle(function (d) {
+			             // return {'color':colorScale(+d.properties.schoolData[0].ratio_out)}
+			             return {'color':colorScale(scale(+d.properties.schoolDataMisto[0]['' + d.properties.schoolDataMisto[0].region_key]/4))}  
 
+				        });
+	        		})
 
-	        misto_layer.on('mouseout', function(d) {
+			        var info = L.control();
 
-	        	misto_layer.setStyle(function (d) {
-	             // return {'color':colorScale(+d.properties.schoolData[0].ratio_out)}
-	             return {'color':colorScale(scale(+d.properties.schoolData[0]['' + d.properties.schoolData[0].region_key]/4))}  
-	        });
+			        info.onAdd = function (map) {
+			            this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
+			            d3.select('div.info').append('p')
+			            this.update();
+			            return this._div;
+			        };
+			        // method that we will use to update the control based on feature properties passed\
+			        info.update = function (props) {
+			            this._div.innerHTML = (props ? 
+			            	'<p><b>' + props.school_oblast + '</b><br />' 
+			                + 'поїхало вступників: ' + props.else + '<br />'
+			                + 'залишилось в області: ' + props.native 
+			                : '<h4>Наведіть на область, щоб побачити' + '<br />' + 
+			                'куди виїздили вступники<h4>');
+			            // d3.select('div.info').text('aaaaaaa')
+			        };
 
-	        })
+			        info.addTo(map);
 
-
-	        var info = L.control();
-
-	        info.onAdd = function (map) {
-	            this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
-	            d3.select('div.info').append('p')
-	            this.update();
-	            return this._div;
-	        };
-
-	        // method that we will use to update the control based on feature properties passed\
-	        info.update = function (props) {
-	            this._div.innerHTML = '<h4>Скільки поїхало студентів</h4>' +  (props ?
-	                '<b>' + props.native + '</b><br />' 
-	                // + props 
-	                + ' вступників'
-	                : 'Hover over a state');
-	            // d3.select('div.info').text('aaaaaaa')
-
-	        };
-
-	        info.addTo(map);
+					// L.control.layers(misto_layer, layer).addTo(map);
 	      		})
 
 	  });
-
-		// L.control.layers(misto_layer, misto).addTo(map);
 
 	  });
 
