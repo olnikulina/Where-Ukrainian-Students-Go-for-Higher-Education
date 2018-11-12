@@ -1,0 +1,229 @@
+<!-- <!doctype html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>Вдома краще?</title>
+
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css"
+	  integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
+	  crossorigin=""/>
+
+	<script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js"
+	  integrity="sha512-nMMmRyTVoLYqjP9hrbed9S+FzjZHW5gY1TWCHA5ckwXZBadntCNs8kEqAWdrb9O7rxbCaA4lKTIWjDXZxflOcA=="
+	  crossorigin=""></script>
+
+</head>
+<body>
+	<div id="mapid"></div>
+
+	<script src="js/script.js"></script>
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html>
+<head>
+
+	<script src="https://d3js.org/d3.v5.min.js"></script>
+	
+	<title>Quick Start - Leaflet</title>
+
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	
+	<link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css" integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA==" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js" integrity="sha512-nMMmRyTVoLYqjP9hrbed9S+FzjZHW5gY1TWCHA5ckwXZBadntCNs8kEqAWdrb9O7rxbCaA4lKTIWjDXZxflOcA==" crossorigin=""></script>
+    <style>
+    	.info {
+    	    padding: 6px 8px;
+    	    font: 14px/16px Arial, Helvetica, sans-serif;
+    	    background: white;
+    	    background: rgba(255,255,255,0.8);
+    	    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    	    border-radius: 5px;
+    	}
+    	.info h4 {
+    	    margin: 0 0 5px;
+    	    color: #777;
+    	}
+
+    </style>
+
+	
+</head>
+<body>
+
+
+<div id="mapid" style="width: 600px; height: 400px;"></div>
+<script>
+
+	var map = L.map('mapid').setView([50, 30], 5);
+
+	L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
+		maxZoom: 18,
+		attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
+			'<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+			'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+		id: 'mapbox.streets'
+	}).addTo(map);
+
+d3.json("Json/oblast.json")
+	  .then(function(polygon){
+	    d3.csv("data.csv")
+	      .then(function(data){
+	      	d3.csv("misto.csv")
+	      		.then(function(misto){
+	      			var colorScale = d3.interpolateOranges
+			var scale = d3.scaleLog()
+				.domain([0.1, 100])
+		    	.range([0.1, 1]);
+
+		    // var layers = L.layerGroup()
+
+		    // var layers = {
+		    // 	'layer': dataMap,
+		    // 	'misto': misto
+		    // } 
+
+		        var dataMap = d3.nest().key(function(d) {
+		        	return d.region_key
+		        }).map(data)
+
+		        polygon.features.forEach(function(d) { 
+		        	d.properties['schoolData'] = dataMap['$'+ d.properties.NAME_1]
+		        	  })
+
+		        var layer = L.geoJSON(polygon, {style:
+		        	{weight: 2,
+		        	stroke: 'white',
+		        	opacity: 1,
+		        	color: 'white',
+		        	dashArray: '3',
+		        	fillOpacity: 0.7
+		        }}).addTo(map);
+
+		        // var misto = d3.nest().key(function(d) {
+		        // 	return d.region_key
+		        // }).map(misto)
+
+		        // polygon.features.forEach(function(d) { 
+		        // 	d.properties['schoolData'] = misto['$'+ d.properties.NAME_1]
+		        // 	  })
+
+		        // var misto_layer = L.geoJSON(polygon, {style:
+		        // 	{weight: 2,
+		        // 	stroke: 'white',
+		        // 	opacity: 1,
+		        // 	color: 'white',
+		        // 	dashArray: '3',
+		        // 	fillOpacity: 0.7
+		        // }}).addTo(map);
+
+	        layer.setStyle(function (d) {
+	             // return {'color':colorScale(+d.properties.schoolData[0].ratio_out)}
+	             return {'color':colorScale(scale(+d.properties.schoolData[0]['' + d.properties.schoolData[0].region_key]/4))}  
+	        });
+
+	        // misto_layer.setStyle(function (d) {
+	        //      // return {'color':colorScale(+d.properties.schoolData[0].ratio_out)}
+	        //      return {'color':colorScale(scale(+d.properties.schoolData[0]['' + d.properties.schoolData[0].region_key]/4))}  
+	        // });
+
+	        var baseLayers = {
+	        	// 'misto': misto_layer,
+	        	'selo': layer
+	        }
+
+	        // window.baseLayers = baseLayers;
+
+	        L.control.layers(baseLayers).addTo(map);
+
+
+	        layer.on('mouseover', function(selo) {
+
+		        layer.setStyle(function (dd) {
+		        		return {'color':colorScale(scale(+selo.sourceTarget.feature.properties.schoolData[0]['' + dd.properties.schoolData[0].region_key]))}
+		        
+		        	
+
+		        });
+
+		        info.update(selo.sourceTarget.feature.properties.schoolData[0]);
+		        // d3.select('div.info p').text('I can write here')
+		        	        	        console.log('selo')
+
+
+	        })
+
+	                // misto_layer.on('mouseover', function(d) {
+
+	        	       //  misto_layer.setStyle(function (dd) {
+	        	       //  		return {'color':colorScale(scale(+d.sourceTarget.feature.properties.schoolData[0]['' + dd.properties.schoolData[0].region_key]))}
+	        	        
+	        	        	
+
+	        	       //  });
+
+	        	       //  info.update(d.sourceTarget.feature.properties.schoolData[0]);
+	        	       //  // d3.select('div.info p').text('I can write here')
+	        	       //  console.log('misto')
+
+	                // })
+
+	        layer.on('mouseout', function(selo) {
+
+	        	layer.setStyle(function (d) {
+	             // return {'color':colorScale(+d.properties.schoolData[0].ratio_out)}
+	             return {'color':colorScale(scale(+d.properties.schoolData[0]['' + d.properties.schoolData[0].region_key]/4))}  
+	        });
+
+	        })
+
+
+	        // misto_layer.on('mouseout', function(d) {
+
+	        // 	misto_layer.setStyle(function (dd) {
+	        //      // return {'color':colorScale(+d.properties.schoolData[0].ratio_out)}
+	        //      return {'color':colorScale(scale(+d.properties.schoolData[0]['' + d.properties.schoolData[0].region_key]/4))}  
+	        // });
+
+	        // })
+
+
+	        var info = L.control();
+
+	        info.onAdd = function (map) {
+	            this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
+	            d3.select('div.info').append('p')
+	            this.update();
+	            return this._div;
+	        };
+
+	        // method that we will use to update the control based on feature properties passed\
+	        info.update = function (props) {
+	            this._div.innerHTML = '<h4>Скільки залишилось студентів</h4>' +  (props ?
+	                '<b>' + props.native + '</b><br />' 
+	                // + props 
+	                + ' вступників'
+	                : 'Hover over a state');
+	            // d3.select('div.info').text('aaaaaaa')
+
+	        };
+
+	        info.addTo(map);
+	      		})
+
+	  });
+
+		// L.control.layers(misto_layer, misto).addTo(map);
+
+	  });
+
+</script>
+
+
+
+</body>
+</html>
